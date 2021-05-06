@@ -211,6 +211,8 @@ bool menu = true;
 bool error = false;
 bool banderariego = false;
 bool mantener = false;
+bool modo_higrometro=false;
+bool modo_riego_horas=false;
 
 ////---------Variables Conversion Datos---------////
 
@@ -297,6 +299,18 @@ void loop() {
   tecla_pulsada = teclado.getKey();//Comprobamos que tecla se ha pulsado
   opcion_seleccionada = tecla_pulsada; //La guardamos en una nueva variable
   //Tenemos varias opciones
+  if(opcion_seleccionada == '1'){//Modo higrómetro activo
+    modo_higrometro = true;
+    modo_riego_horas = false;
+    opcion_seleccionada = '\0';
+    error = false;
+  }
+  if(opcion_seleccionada == '2'){//Modo horas de riego activo
+    modo_riego_horas = true;
+    modo_higrometro = false;
+    opcion_seleccionada = '\0';
+    error = false;
+  }
   if (opcion_seleccionada == 'A') {
     programar_Horarios(horariego1_00, "A");
     opcion_seleccionada = '\0';
@@ -319,6 +333,10 @@ void loop() {
   if (opcion_seleccionada == '#') {
     opcion_seleccionada = '\0';
     opcion_sensado();
+  }
+
+  if(modo_higrometro==true){//Siempre que estemos en el modo higrómetro, llamaremos continuamente 
+    mod_higrometro();
   }
 }
 
@@ -485,63 +503,65 @@ void hora_de_regar() {
 
   //int horabandera1 = horariego1_00[1] + 1;
 
-  
-  if (horariego1_00[0]==hora && horariego1_00[1]==minuto && banderariego == false) {
+  if (modo_riego_horas == true){
+      if (horariego1_00[0]==hora && horariego1_00[1]==minuto && banderariego == false) {
     
-    /////ENCENDEMOS LA BOMBA DURANTE 10 segundos////////
-    if(banderatiempo==false){
-      tiempobomba = tiempo;
-      estadoriegoint = 1;
-      digitalWrite(LED_BUILTIN, HIGH);   // turn the LED on (HIGH is the voltage level)
-      banderatiempo = true;
+     /////ENCENDEMOS LA BOMBA DURANTE 10 segundos////////
+      if(banderatiempo==false){
+       tiempobomba = tiempo;
+       estadoriegoint = 1;
+       digitalWrite(LED_BUILTIN, HIGH);   // turn the LED on (HIGH is the voltage level)
+       banderatiempo = true;
       
+      }
+      if(tiempo-tiempobomba>=10000 && banderatiempo==1){
+       digitalWrite(LED_BUILTIN, LOW);    // turn the LED off by making the voltage LOW
+        banderariego = true;
+        estadoriegoint = 0;
+      }
     }
-    if(tiempo-tiempobomba>=10000 && banderatiempo==1){
-      digitalWrite(LED_BUILTIN, LOW);    // turn the LED off by making the voltage LOW
-      banderariego = true;
-      estadoriegoint = 0;
-    }
-  }
 
-  if((horariego1_00[1] + 1)==minuto && (horariego2_00[1] + 1)==minuto && (horariego3_00[1] + 1)==minuto){
-    banderariego = false;
-    banderatiempo = false;
-  }
+    if((horariego1_00[1] + 1)==minuto && (horariego2_00[1] + 1)==minuto && (horariego3_00[1] + 1)==minuto){
+      banderariego = false;
+      banderatiempo = false;
+    }
 
 
     
-  if (horariego2_00[0]==hora && horariego2_00[1]==minuto && banderariego == false) {
+    if (horariego2_00[0]==hora && horariego2_00[1]==minuto && banderariego == false) {
     
-    /////ENCENDEMOS LA BOMBA DURANTE 10 segundos////////
-    if(banderatiempo==false){
-      tiempobomba = tiempo;
-      estadoriegoint = 1;
-      digitalWrite(LED_BUILTIN, HIGH);   // turn the LED on (HIGH is the voltage level)
-      banderatiempo = true;
+      /////ENCENDEMOS LA BOMBA DURANTE 10 segundos////////
+      if(banderatiempo==false){
+        tiempobomba = tiempo;
+        estadoriegoint = 1;
+        digitalWrite(LED_BUILTIN, HIGH);   // turn the LED on (HIGH is the voltage level)
+        banderatiempo = true;
+      }
+      if(tiempo-tiempobomba>=10000 && banderatiempo==1){
+        digitalWrite(LED_BUILTIN, LOW);    // turn the LED off by making the voltage LOW
+        banderariego = true;
+        estadoriegoint = 0;
+      }
     }
-    if(tiempo-tiempobomba>=10000 && banderatiempo==1){
-      digitalWrite(LED_BUILTIN, LOW);    // turn the LED off by making the voltage LOW
-      banderariego = true;
-      estadoriegoint = 0;
-    }
-  }
   
   
-  if (horariego3_00[0]==hora && horariego3_00[1]==minuto && banderariego == false) {
+    if (horariego3_00[0]==hora && horariego3_00[1]==minuto && banderariego == false) {
     
-    /////ENCENDEMOS LA BOMBA DURANTE 10 segundos////////
-    if(banderatiempo==false){
-      tiempobomba = tiempo;
-      estadoriegoint = 1;
-      digitalWrite(LED_BUILTIN, HIGH);   // turn the LED on (HIGH is the voltage level)
-      banderatiempo = true;
-    }
-    if(tiempo-tiempobomba>=10000 && banderatiempo==1){
-      digitalWrite(LED_BUILTIN, LOW);    // turn the LED off by making the voltage LOW
-      banderariego = true;
-      estadoriegoint = 0;
+      /////ENCENDEMOS LA BOMBA DURANTE 10 segundos////////
+      if(banderatiempo==false){
+        tiempobomba = tiempo;
+        estadoriegoint = 1;
+        digitalWrite(LED_BUILTIN, HIGH);   // turn the LED on (HIGH is the voltage level)
+        banderatiempo = true;
+      }
+      if(tiempo-tiempobomba>=10000 && banderatiempo==1){
+        digitalWrite(LED_BUILTIN, LOW);    // turn the LED off by making the voltage LOW
+        banderariego = true;
+        estadoriegoint = 0;
+      } 
     }
   }
+
 }
 
 void opcion_sensado() {
@@ -645,4 +665,16 @@ void mostrar_horas_riego(){
   }
 
    
+}
+
+void mod_higrometro(){
+  humedad_tierra = map(analogRead(higrometro), 0, 1023, 0, 100);
+  if(0<humedad_tierra<70){
+    while(humedad_tierra<70){
+      digitalWrite(LED_BUILTIN, HIGH);   // mantenemos encendida la bomba
+    }
+  }
+  if(humedad_tierra>=70){
+    digitalWrite(LED_BUILTIN, LOW);   // apagamos la bomba
+  }
 }
